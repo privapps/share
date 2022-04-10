@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat / File Sharing</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//cdn.jsdelivr.net/npm/picnic@7.1.0/picnic.min.css" rel="stylesheet">
+
+    <style type="text/css">
+        .sent {
+            color: cornflowerblue;
+            float: right;
+            background-color: beige;
+        }
+        
+        .status {
+            text-transform: uppercase;
+            color: blueviolet;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        pre {
+            border-style: none none dotted none;
+            margin: 0 0 2px 10px;
+        }
+        
+        .float-right {
+            float: right;
+        }
+        
+        .border-box {
+            outline: 1px dashed gray;
+            /* border-style: inset; */
+            /* margin: 2px; */
+        }
+        
+        .fill-all {
+            width: 100%;
+        }
+        
+        .fill-half {
+            width: 49%;
+        }
+        
+        #details {
+            background-color: #efefef;
+            padding: 10px 10px 40px 10px;
+            margin: 10px;
+        }
+        
+        .info {
+            background-color: #7fdbff;
+        }
+        
+        #chat {
+            overflow: scroll;
+            max-height: 200px;
+        }
+        
+        label {
+            padding-left: 20px;
+        }
+        
+        body {
+            padding: 10px 20px 10px 20px;
+        }
+        
+        span.tm {
+            float: left;
+            font-size: 70%;
+            padding-right: 20px;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Chat / File Sharing</h1>
+    <div class="flex three demo">
+        <div>
+            <div>
+                <label>
+                    <input type="radio" id='rolei' value="i" name="arole" onchange="roleChange(this)" onclick="roleChange(this)">
+                    <span class="checkable">Initiator</span>
+                  </label>
+            </div>
+            <div>
+                <label>
+                    <input type="radio" id='rolea' value="a" name="arole" onchange="roleChange(this)">
+                   <span class="checkable">Responder</span>
+                 </label>
+            </div>
+        </div>
+        <div class="border-box">
+            <input id='uniqStr' type="text" placeholder="shared secrets" size="16"><br>Shared Secrets</div>
+        <div>
+
+            <input type="text" id='piping' placeholder="piping server" value="https://piping.nwtgck.repl.co/" size="25" /> <br/>
+            <button id='detailOps' class="toggle warning fill-half">Debug</button><button class="info fill-half">Help</button>
+        </div>
+    </div>
+
+    </div>
+    <div id='details' class="border-box">
+        <div class="clearfix">
+            <textarea rows="4" cols="50" id=localOffer></textarea>
+            <div class="right">
+                <button id=localOfferSet class="float-right warning">Create Offer</button>
+            </div>
+        </div>
+        <div class="col col-12">
+
+        </div>
+        <div class="clearfix">
+            <textarea id="remoteOffer" rows="4" cols="50" class="col col-10" placeholder="Paste remote SDP"></textarea>
+            <div class="right col col-2">
+                <button id=remoteOfferGot class="float-right warning">Answer It</button>
+            </div>
+        </div>
+        <div class="col col-12">
+            <span id='debug'></span>
+        </div>
+
+    </div>
+    <div>
+        <p class="status center" id='pstatus'>disconnected</p>
+    </div>
+    <div class="clearfix" id="operation">
+        <div class="border-box">
+
+            <div class="row">
+                <form action="" onsubmit="event.preventDefault();return sendMsg();" class="flex demo">
+                    <div>
+                        <input id=sendTxt type="text" name="" placeholder="chat here" style="width: 100%;">
+                    </div>
+                    <div class="float-right">
+                        <button type="submit" class="float-right fill-all btn">Message</button>
+                    </div>
+                </form>
+            </div>
+            <div id="chat"></div>
+        </div>
+        <div class="row">
+            <h3>File transfer:</h3>
+            <h4>Sending</h4>
+            <div class="flex demo">
+                <div>
+                    <input type="file" name="" id=fileTransfer class="fill-all btn" size="10">
+                </div>
+                <div>
+                    <button type="submit" onclick="sendFile()" class="float-right btn fill-all">send</button>
+                </div>
+            </div>
+            <div>
+                <progress value="0" id="sendFileProg" class="fill-all"></progress>
+            </div>
+            <h4>Receiving</h4>
+            <div>
+                <a href="" id=file_download></a>
+                <progress value="0" id="recFileProg" class="fill-all"></progress>
+            </div>
+        </div>
+    </div>
+    <script src="js/plainwebrtc.js"></script>
+    <script src="js/production.min.js"></script>
+</body>
+
+</html>
