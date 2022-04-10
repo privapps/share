@@ -7,7 +7,9 @@ Under the neath, it uses  a public [Piping server](https://github.com/nwtgck/pip
 A lot of time I need to transfer files between computers or phones. However, not all devices have BlueTooth, USB cables may not be available, nor always possible to run your local web server, e.g. `python3 -m HTTP.server 8080`. While using email or instant messages that go through some third-party servers is not ideal too.
 
 ### Demo
-[Live Demo Site](https://privapps.github.io/share/)
+[Live Site](https://privapps.github.io/share/)
+
+![Demo](./demos.gif)
 
 
 ### Usage
@@ -22,15 +24,20 @@ A lot of time I need to transfer files between computers or phones. However, not
 - Due to the nature of WebRTC, if devices are in a different network, e.g. under a different router, using a virtual machine, etc. devices' information can be exchanged (using public piping server), but the WebRTC connection may not be initialized.
 - You can open the debug tab to see the initial handshake.
 
-
-
 ### Features
 * chat
 * file transfer
 
+### Tested
+* Chrome 73+
+* Firefox 85+
+* Safari 14
+* Chromium 91
+
+On Android, Windows 10, Mac and Linux. But actual result may vary due to the network configure.
 
 ### Archetecture / Diagrams
-![Diagram] (./diagram.jpg)
+![Diagram](./diagram.jpg)
 
 ### Credit
 * [piping server](https://github.com/nwtgck/piping-server)
