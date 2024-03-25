@@ -1,0 +1,134 @@
+<html>
+
+<head>
+    <title>Simple Chat via Piping Server</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//cdn.jsdelivr.net/npm/picnic@7.1.0/picnic.min.css" rel="stylesheet">
+    <style>
+        body,
+        input,
+        button {
+            font-size: 20px;
+            margin: 2px;
+        }
+        
+        #talks {
+            padding: 5px;
+        }
+        
+        .me {
+            text-align: right;
+            background-color: bisque;
+        }
+    </style>
+    <script src="js/piping-extra.js"></script>
+</head>
+
+<body>
+    <a target="_blank" href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo Ota</a>
+    <div class="flex three">
+        <div>
+            <input placeholder="Your ID" id='your_id'>
+        </div>
+        <div>
+            <input placeholder="Peer ID" id='peer_id'>
+        </div>
+        <div>
+            <select id='piping'>
+                <option value="https://ppng.io/">https://ppng.io/</option>
+                <option value="https://piping.glitch.me/">https://piping.glitch.me/</option>
+                <option value="https://piping-47q675ro2guv.runkit.sh/">https://piping-47q675ro2guv.runkit.sh/</option>
+            </select>
+        </div>
+    </div>
+    <div class="flex two">
+        <div>
+            <button onclick='receiveLoop(this)' id='btn'>Connect</button>
+        </div>
+        <div>
+            <input placeholder="secrets" id='secrets'>
+        </div>
+    </div>
+    <p style='position: absolute; bottom: 0;'>
+        <input placeholder="Message" id='message' size='50'>
+    </p>
+
+
+    <hr>
+    <div id='talks'>
+        <!--This will be added by JavaScript -->
+    </div>
+    <script>
+        async function getUrl(str) {
+            return piping.value + await sha256(str)
+        }
+        var check_url, post_url, cypher_key
+        secrets.value = window.location.href
+        message.disabled = true
+        var grr
+
+        function switchOp(flag) {
+            your_id.disabled = peer_id.disabled = btn.disabled = piping.disabled = secrets.disabled = flag;
+            message.disabled = !flag
+        }
+
+        // Receive-loop
+        async function receiveLoop(btn) {
+            switchOp(true)
+            check_url = await getUrl(`${peer_id.value}-${your_id.value}`)
+            post_url = await getUrl(`${your_id.value}-${peer_id.value}`)
+
+            cypher_key = await generateKeyFromSeed(secrets.value, new Date().getFullYear().toString())
+
+            while (true) {
+                try {
+                    // Get peer's response
+                    const res = await fetch(check_url);
+                    // Create talk element
+                    const talk = document.createElement('div');
+                    // Set peer's message
+                    const raw = await res.text();
+
+                    const decryptedData = await decrypt2Str(raw, cypher_key)
+                    talk.innerText = decryptedData
+                        // Add peer's message
+                    talks.appendChild(talk);
+                } catch (err) {
+                    console.error(err);
+                    grr = err
+                    if (err.name === 'OperationError') {
+                        switchOp(false)
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Send your message
+        async function send() {
+            if (message.value === '') {
+                return
+            }
+            const data = await encrypt2Str(message.value, cypher_key)
+                // Send your message
+            fetch(post_url, {
+                'method': 'POST',
+                body: data //message.value
+            });
+            // Create talk element
+            const talk = document.createElement('div');
+            talk.innerText = message.value;
+            talk.classList.add('me');
+            talks.appendChild(talk);
+            // Empty your message
+            message.value = '';
+        }
+        window.message.onkeyup = (ev) => {
+            if (ev.key === 'Enter') {
+                send()
+            }
+        }
+    </script>
+</body>
+<html>
