@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Simple Chat via Piping Server</title>
+    <title>Encrypted Chat via Piping Server</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//cdn.jsdelivr.net/npm/picnic@7.1.0/picnic.min.css" rel="stylesheet">
@@ -17,6 +17,10 @@
             padding: 5px;
         }
         
+        span {
+            display: block;
+        }
+        
         .me {
             text-align: right;
             background-color: bisque;
@@ -26,10 +30,14 @@
 </head>
 
 <body>
-    <a target="_blank" href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo Ota</a>
+    <div class="flex">
+        <a target="_blank" href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo Ota</a>
+        <small>Symmetric encryption is added</small>
+    </div>
+
     <div class="flex three">
         <div>
-            <input placeholder="Your ID" id='your_id'>
+            <input placeholder="Your ID. Any String" id='your_id'>
         </div>
         <div>
             <input placeholder="Peer ID" id='peer_id'>
@@ -44,10 +52,10 @@
     </div>
     <div class="flex two">
         <div>
-            <button onclick='receiveLoop(this)' id='btn'>Connect</button>
+            <button onclick='receiveLoop(this)' id='btn' data-tooltip="Secrets has to match" class="tooltip-right">Connect</button>
         </div>
         <div>
-            <input placeholder="secrets" id='secrets'>
+            <input placeholder="Secrets. has to match with your peer" id='secrets'>
         </div>
     </div>
     <p style='position: absolute; bottom: 0;'>
@@ -61,7 +69,7 @@
     </div>
     <script>
         async function getUrl(str) {
-            return piping.value + await sha256(str)
+            return piping.value + 'jschat-' + await sha256(str)
         }
         var check_url, post_url, cypher_key
         secrets.value = window.location.href
@@ -75,18 +83,25 @@
 
         // Receive-loop
         async function receiveLoop(btn) {
+            if (your_id.value === '' || peer_id.value === '' || secrets.value === '') {
+                return
+            }
+
             switchOp(true)
             check_url = await getUrl(`${peer_id.value}-${your_id.value}`)
             post_url = await getUrl(`${your_id.value}-${peer_id.value}`)
 
-            cypher_key = await generateKeyFromSeed(secrets.value, new Date().getFullYear().toString())
+            const currentDate = new Date()
+            const salt = `${currentDate.getUTCFullYear()}-${currentDate.getUTCMonth() + 1}-${currentDate.getUTCDate()}`
+            cypher_key = await generateKeyFromSeed(secrets.value, salt)
+            send(`** ${your_id.value} connected **`)
 
             while (true) {
                 try {
                     // Get peer's response
                     const res = await fetch(check_url);
                     // Create talk element
-                    const talk = document.createElement('div');
+                    const talk = document.createElement('span');
                     // Set peer's message
                     const raw = await res.text();
 
@@ -106,23 +121,26 @@
         }
 
         // Send your message
-        async function send() {
-            if (message.value === '') {
+        async function send(msg = message.value) {
+            if (msg === '') {
                 return
             }
-            const data = await encrypt2Str(message.value, cypher_key)
+            const data = await encrypt2Str(msg, cypher_key)
                 // Send your message
             fetch(post_url, {
                 'method': 'POST',
                 body: data //message.value
-            });
-            // Create talk element
-            const talk = document.createElement('div');
-            talk.innerText = message.value;
-            talk.classList.add('me');
-            talks.appendChild(talk);
-            // Empty your message
-            message.value = '';
+            }).then(res => {
+                if (res.ok) {
+                    // Create talk element
+                    const talk = document.createElement('span');
+                    talk.innerText = msg;
+                    talk.classList.add('me');
+                    talks.appendChild(talk);
+                    // Empty your message
+                    message.value = '';
+                }
+            }).catch(err => console.error(err))
         }
         window.message.onkeyup = (ev) => {
             if (ev.key === 'Enter') {

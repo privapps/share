@@ -50,3 +50,9 @@ On Android, Windows 10, Mac and Linux. But actual result may vary due to the net
 
 ### Contribute
 Raise PR if have improvements.
+
+
+### In addition
+In the event that WebRTC encounters issues, an alternative chat solution has been implemented using a piping server. This method is considerably more reliable, as WebRTC connectivity can sometimes be inconsistent. The addition of symmetric encryption ensures the privacy and security of the communication, which is particularly important since it operates over a public server.
+
+https://privapps.github.io/share/chat.html
