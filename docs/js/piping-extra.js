@@ -86,3 +86,57 @@ async function decrypt2Str(str, key) {
     ivo = getIVFromBase64(s[1])
     return decrypt(edo, key, ivo)
 }
+
+async function encrypt2bin(data, key) {
+    const {
+        encryptedData,
+        iv
+    } = await encrypt(new TextEncoder().encode(data), key)
+    const uint8Array = new Uint8Array(encryptedData);
+    const combinedArray = new Uint8Array(iv.length + uint8Array.length);
+    combinedArray.set(iv, 0);
+    combinedArray.set(uint8Array, iv.length);
+    return combinedArray
+}
+
+async function decryptStrFromBin(bytes, key) {
+    const ivLength = 12
+    const oiv = bytes.slice(0, ivLength);
+    const odt = bytes.slice(ivLength);
+    return decrypt(odt, key, oiv)
+}
+
+/**
+ * Compress files with minizip 
+ * this requires https://www.npmjs.com/package/minizip-asm.js 
+ * files from html, password should be str and out_file_name should be str
+ * return encrypted file
+ */
+async function compress_with_minizip_and_encrypt(files, password, out_file_name) {
+    const mzip = new Minizip();
+
+    // Map each file to a promise and collect those promises in an array
+    const promises = Array.from(files).map(file => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                mzip.append(file.name, event.target.result, {
+                    password: password
+                });
+                resolve();
+            };
+            reader.onerror = function(error) {
+                reject(error);
+            };
+            reader.readAsArrayBuffer(file); // Use readAsArrayBuffer for binary data
+        });
+    });
+
+    // Wait for all promises to resolve
+    await Promise.all(promises);
+
+    // Create a new file from the zip content
+    return new File([mzip.zip()], out_file_name, {
+        type: 'application/octet-binary'
+    });
+}

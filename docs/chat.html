@@ -41,6 +41,7 @@
             color: #aaa;
         }
     </style>
+    <script src="https://rf00.github.io/minizip-asm.js/lib/minizip-asm.min.js"></script>
     <script src="js/piping-extra.js"></script>
 </head>
 
@@ -72,20 +73,21 @@
             <button onclick='receiveLoop(this)' id='btn' data-tooltip="Secrets has to match" class="tooltip-right">Connect</button>
         </div>
         <div>
-            <button onclick='switchFile()' id='button_file' class='warning' disabled>Transfer File </button>
+            <button onclick='switchFile()' id='button_file' class='warning' disabled>Transfer Files</button>
         </div>
         <div>
-            <input type="text" placeholder="Secrets. has to match with your peer" id='secrets'>
+            <input type="text" placeholder="Secrets. has to match with your peer" id='html_secret'>
         </div>
     </div>
 
     <div id="file_upload" class="flex two" style="display: none;">
         <div style="float: left;">
-            <label for="fileInput"><small>Upload File Not Encrypted</small><br/>
-            <input type="file" id="fileInput"></label>
+            <label for="fileInput"><small>Multiple Files will be zipped and encrypted.</small><br/>
+            <input type="file" id="fileInput" multiple></label>
         </div>
         <div style="float: right;">
-            <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Transfer</button>
+            <label for="uploadButton"><small>Password is same as your chat secrets</small></label>
+            <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Send</button>
         </div>
     </div>
 
@@ -97,6 +99,7 @@
     </div>
     <script>
         let show_file = false
+        let last_msg
 
         function switchFile() {
             show_file = !show_file
@@ -113,9 +116,11 @@
                 return
             }
             var file = fileInput.files[0];
-
+            console.log('ofile', file)
+            const zip_file = await compress_with_minizip_and_encrypt(fileInput.files, html_secret.value, file.name + '.zip')
+            console.log('zfile', zip_file)
             var formData = new FormData();
-            formData.append("file", file);
+            formData.append("file", zip_file);
             url = (await getUrl(`${your_id.value}`)).substring(0, 50) + '~f'
             text = 'sending file: \n' + url;
             send(text)
@@ -144,14 +149,14 @@
         var grr
 
         function switchOp(flag) {
-            your_id.disabled = peer_id.disabled = btn.disabled = piping.disabled = secrets.disabled = flag;
+            your_id.disabled = peer_id.disabled = btn.disabled = piping.disabled = html_secret.disabled = flag;
             message.disabled = !flag
             button_file.disabled = !flag
         }
 
         // Receive-loop
         async function receiveLoop(btn) {
-            if (your_id.value === '' || peer_id.value === '' || secrets.value === '') {
+            if (your_id.value === '' || peer_id.value === '' || html_secret.value === '') {
                 return
             }
 
@@ -161,7 +166,7 @@
 
             const currentDate = new Date()
             const salt = `${currentDate.getUTCFullYear()}-${currentDate.getUTCMonth() + 1}-${currentDate.getUTCDate()}`
-            cypher_key = await generateKeyFromSeed(secrets.value, salt)
+            cypher_key = await generateKeyFromSeed(html_secret.value, salt)
             send(`** ${your_id.value} is ready **`)
 
             while (true) {
@@ -185,8 +190,17 @@
         async function addReceiveSpan(decryptedData) {
             const talk = document.createElement('span');
             talk.classList.add('other');
-            talk.innerText = `${new Date().toLocaleTimeString()}\n  ${decryptedData}`
-                // Add peer's message
+
+            const regex0 = /^sending file: \n(http.*~f$)/
+            const m = decryptedData.match(regex0)
+            if (m) {
+                const old = talk.innerHTML
+                talk.innerText = `${new Date().toLocaleTimeString()}\n`
+                talk.innerHTML = talk.innerHTML + `sending file:<a href="${m[1]}">${m[1]}</a>`
+            } else {
+                talk.innerText = `${new Date().toLocaleTimeString()}\n  ${decryptedData}`
+            }
+            // Add peer's message
             talks.insertBefore(talk, talks.firstChild);
         }
 
@@ -222,8 +236,8 @@
         }
         document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill the input field when the page is ready
-            sha256(new Date().getTime().toString()).then(k => secrets.value = k.substring(3, 7))
-                // console.log(secrets.value)
+            sha256(new Date().getTime().toString()).then(k => html_secret.value = k.substring(3, 7))
+                // console.log(html_secret.value)
         });
     </script>
 </body>

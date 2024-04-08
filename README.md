@@ -3,11 +3,15 @@ A pure static javascript running in a browser that can chat and share files betw
 
 Under the neath, it uses  a public [Piping server](https://github.com/nwtgck/piping-server) to do the handshake (signal server), and WebRTC when chatting or file transfer.
 
+Or, you can also use plain Piping as backend for chat with end to end encryption. It also has a way to zip multiple files together using the password shared for chat.
+
 ### Why
 A lot of time I need to transfer files between computers or phones. However, not all devices have BlueTooth, USB cables may not be available, nor always possible to run your local web server, e.g. `python3 -m HTTP.server 8080`. While using email or instant messages that go through some third-party servers is not ideal too.
 
 ### Demo
-[Live Site](https://privapps.github.io/share/)
+Live Site 
+* [WebRTC](https://privapps.github.io/share/)
+* [Plain E2E encrypted Piping](https://privapps.github.io/share/chat.html)
 
 ![Demo](./demos.gif)
 
@@ -36,7 +40,7 @@ A lot of time I need to transfer files between computers or phones. However, not
 
 On Android, Windows 10, Mac and Linux. But actual result may vary due to the network configure.
 
-### Archetecture / Diagrams
+### WebRTC Archetecture / Diagrams
 ![Diagram](./diagram.jpg)
 
 ### Credit
@@ -47,6 +51,7 @@ On Android, Windows 10, Mac and Linux. But actual result may vary due to the net
 
 ### Alternative 
 * [ShareDrop](https://github.com/szimek/sharedrop)
+* [PeerJS File Transfer](https://privapps.github.io/p2pf/)
 
 ### Contribute
 Raise PR if have improvements.
