@@ -86,7 +86,7 @@
             <input type="file" id="fileInput" multiple></label>
         </div>
         <div style="float: right;">
-            <label for="uploadButton"><small>Password is same as your chat secrets</small></label>
+            <label for="uploadButton"><small>Password is same as your chat secrets</small></label><br/>
             <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Send</button>
         </div>
     </div>
@@ -116,9 +116,9 @@
                 return
             }
             var file = fileInput.files[0];
-            console.log('ofile', file)
+            // console.log('ofile', file)
             const zip_file = await compress_with_minizip_and_encrypt(fileInput.files, html_secret.value, file.name + '.zip')
-            console.log('zfile', zip_file)
+                // console.log('zfile', zip_file)
             var formData = new FormData();
             formData.append("file", zip_file);
             url = (await getUrl(`${your_id.value}`)).substring(0, 50) + '~f'

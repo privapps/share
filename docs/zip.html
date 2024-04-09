@@ -1,0 +1,80 @@
+<html>
+
+<head>
+    <title>Zip Extract</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://rf00.github.io/minizip-asm.js/lib/minizip-asm.min.js"></script>
+</head>
+
+<body>
+    <h2>Multiple Files in the zip file will be extracted one by one</h2>
+    <label for="fileInput">
+            <input type="file" id="fileInput"></label>
+    <label for="passwordInput"><small>Password</small>
+            <input type="text" id="passwordInput" value="1"></label>
+    <button id="Extract" onclick="handleFile()">Extract</button>
+    <script>
+        let out_files = []
+        async function handleFile() {
+            const password = document.getElementById("passwordInput").value
+
+            const file = document.getElementById("fileInput").files[0]
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                let resp = []
+                console.log('here')
+                reader.onload = function(event) {
+                    console.log(file.name)
+                        // if file name end with zip
+                    if (file.name.endsWith('.zip')) {
+
+                        var zip = new Minizip(new Uint8Array(event.target.result));
+
+                        zip.list({
+                            encoding: "buffer"
+                        }).forEach(function(o) {
+
+                            uint8Array = zip.extract(o.filepath, {
+                                password: password
+                            })
+                            out_files.push([new TextDecoder().decode(o.filepath), uint8Array])
+                            resolve()
+                        });
+                    }
+                }
+                reader.onerror = function(error) {
+                    reject(error);
+                };
+                reader.readAsArrayBuffer(file); // Use readAsArrayBuffer for binary data
+            }).then(() => {
+                out_files.forEach(f => {
+                    saveUint8ArrayToFile(f[1], f[0])
+                })
+            })
+        }
+
+        function saveUint8ArrayToFile(uint8Array, filename) {
+            // Create a Blob from the Uint8Array
+            const blob = new Blob([uint8Array], {
+                type: 'application/octet-stream'
+            });
+
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+
+            // Create a temporary anchor element
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'file.bin'; // Default filename if not provided
+
+            // Programmatically trigger a click event on the anchor element to initiate download
+            a.click();
+
+            // Clean up by revoking the URL
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
+</html>
