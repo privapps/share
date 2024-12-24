@@ -20,6 +20,7 @@
         #talks span {
             display: block;
             margin: 5px;
+            border-radius: 10px;
         }
         
         .me {
@@ -46,21 +47,28 @@
             padding-right: 10px;
         }
         
-        input[type="text"]:disabled {
-            background-color: #e2e2e2;
-            color: #555;
-        }
-        
-        input[type="text"]::placeholder {
-            color: #aaa;
-        }
-        
-        .file-dev {
-            background-color: beige;
+        .connected {
+            background-color: aliceblue;
         }
         
         .flex-center {
             display: flex;
+            justify-content: center;
+        }
+        
+        div.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        #message_box {
+            background-color: whitesmoke;
+        }
+        
+        #error_div {
+            background-color: red;
+            font-weight: bold;
+            color: white;
             justify-content: center;
         }
     </style>
@@ -78,75 +86,82 @@
         <a href="./index.html">Webrtc based</a>
     </div>
 
-    <div class="flex three">
+    <div class="flex four" id="control_div">
         <div>
-            <input type="text" placeholder="Your ID. Any String" id='your_id'>
+            <small>One for Each</small><br />
+            <label for="rolei">
+                <input type="radio" id='rolei' value="i" name="arole" onclick="roleChange(this)"
+                    onclick="roleChange(this)">
+                <span class="checkable"><small>Initiator</small></span>
+            </label><br />
+            <label for="rolea">
+                <input type="radio" id='rolea' value="a" name="arole" onclick="roleChange(this)">
+                <span class="checkable"><small>Acceptor</small></span>
+            </label>
         </div>
         <div>
-            <input type="text" placeholder="Peer ID" id='peer_id'>
+            <label for="pair_key"><small>Use same string key for connection</small></label>
+            <input type="text" placeholder="Shared Key. any String" id='pair_key'>
         </div>
         <div>
+            <label for="html_secret"><small>Same key for encryption or decryption</small></label>
+            <input type="text" placeholder="Secrets. has to match with your peer" id='html_secret'>
+        </div>
+        <div>
+            <label for="piping"><small>Server for message exchange</small></label>
             <select type="text" id='piping'>
+                <option value="https://0h0.alwaysdata.net/piping-server/">alwaysdata.net</option>
                 <option value="https://ppng.io/">https://ppng.io/</option>
                 <option value="https://piping.glitch.me/">https://piping.glitch.me/</option>
-                <option value="https://piping-47q675ro2guv.runkit.sh/">https://piping-47q675ro2guv.runkit.sh/</option>
             </select>
         </div>
     </div>
-    <div id="file_upload_div" class="flex three file-dev" style="display: none;">
+    <div id="connected_div" class="flex connected" style="display: none;">
+        <div class="flex three">
 
-        <div>
-            <input type="file" id="fileInput" class="file-dev"></label>
+            <div>
+                <input type="file" id="fileInput" class="connected"></label>
+            </div>
+            <div>
+                <button id="uploadButton" class="shyButton" onclick="uploadFile()">Send File</button>
+            </div>
+            <div>
+                <input type="checkbox" id="fileEncrypt" onchange="handleCheckboxChange()">
+                <label for="fileEncrypt" class="checkable">Zip Encrypt
+                </label>
+            </div>
         </div>
-        <div>
-            <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Send File</button>
-        </div>
-        <div>
-            <input type="checkbox" id="fileEncrypt" onchange="handleCheckboxChange()"><label for="fileEncrypt" class="checkable">Zip Encrypt
-            </label>
-            <small>If selected, multiple Files can be zipped together and encrypted. Password is same as your
-                chat
-                secrets.
+        <div class="flex">
+            <small>If archived and encrypted, multiple Files can be zipped together and encrypted. Password is same as
+                your chat secrets.
                 Otherwise, the raw file will be sent, one at a time. <a href="zip.html" target="_blank">You can unzip
                     here </a></small>
         </div>
-    </div>
-    <div class="flex three">
-        <div>
-            <button onclick='receiveLoop(this)' id='btn' data-tooltip="Secrets has to match" class="tooltip-right">Connect</button>
-            <button onclick='send()' id='button_send' style="display: none;" class="shyButton success">Send
+        <div class="flex">
+            <button onclick='send()' style="font-size: 80%;" id='button_send' class="shyButton">Send
                 Message</button>
         </div>
-        <div class="file-dev flex-center">
-            <button onclick='switchFile()' id='button_file' class='warning toggle' disabled>Transfer Files</button>
-        </div>
-        <div>
-            <input type="text" placeholder="Secrets. has to match with your peer" id='html_secret'>
+        <div class="flex" id="message_box">
+            <div><textarea style="width: 100%;box-sizing: border-box" rows="2" placeholder="Message. Control + Enter to send" id='message'></textarea></div>
         </div>
     </div>
 
-    <div class="flex" id="message_box">
-        <div><textarea style="width: 100%;box-sizing: border-box" rows="2" placeholder="Message. Control + Enter to send" id='message'></textarea></div>
-    </div>
+    <div id="error_div" class="flex danger" style="display: none;"></div>
+
+
+
     <div id='talks'>
         <!--This will be added by JavaScript -->
     </div>
     <script>
+        let get_url, post_url
         let show_file = false
         let last_msg
-
-        function switchFile() {
-            show_file = !show_file
-            if (show_file) {
-                file_upload_div.style.display = 'flex'
-            } else {
-                file_upload_div.style.display = 'none'
-            }
-        }
 
         async function uploadFile(file) {
             var fileInput = document.getElementById('fileInput');
             if (!fileInput.files || fileInput.files.length === 0) {
+                alert('No file selected.')
                 return
             }
             const fileEncryptCheckbox = document.getElementById('fileEncrypt');
@@ -156,63 +171,69 @@
                 file
             var formData = new FormData();
             formData.append("file", file_to_send);
-            url = (await getUrl(`${your_id.value}`)).substring(0, 50) + '_' + (await sha256(new Date())).substring(0, 8) + '~f'
+            url = post_url + '_' + (await sha256(new Date())).substring(0, 8) + '~f'
             text = 'sending file: \n' + url;
             send(text)
-            console.log(url, await getUrl(`${your_id.value}`))
             fetch(url, {
-                    method: "POST",
-                    body: formData
-                }).then(response => {
-                    if (!response.ok) {
-                        throw new Error("Upload failed with status " + response.status);
-                    }
-                    console.log("File uploaded successfully.");
-                })
-                .catch(error => {
-                    addMyMessageSpan("Error occurred during file upload: " + error.message);
-                });
+                method: "POST",
+                body: formData
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error("Upload failed with status " + response.status);
+                }
+                console.log("File uploaded successfully.");
+            }).catch(error => {
+                addMyMessageSpan("Error occurred during file upload: " + error.message);
+            });
         }
 
-        async function getUrl(str) {
-            return piping.value + 'jschat-' + await sha256(str)
-        }
-        var check_url, post_url, cypher_key
-
-        message.disabled = true
-        var grr
 
         function switchOp(flag) {
-            your_id.disabled = peer_id.disabled = btn.disabled = piping.disabled = html_secret.disabled = flag;
-            message.disabled = button_file.disabled = !flag
             if (flag) {
-                btn.style.display = 'none'
-                button_send.style.display = 'flex'
+                control_div.classList.add("disabled")
+                connected_div.style.display = 'flex'
             } else {
-                button_send.style.display = 'none'
-                btn.style.display = 'flex'
+                control_div.classList.remove("disabled")
+                connected_div.style.display = 'none'
             }
+        }
+
+        async function roleChange(bt) {
+            if (pair_key.value === '' || html_secret.value === '') {
+                return
+            }
+            xkey = pair_key.value.split("").reverse().join("")
+            if (xkey === pair_key.value) {
+                show_error('Pair key is not valid')
+                return
+            }
+            initiator = bt.value === 'i'
+            path1 = await sha256(pair_key.value)
+            path2 = await sha256(xkey)
+            if (initiator) {
+                get_url = piping.value + 'jschat-' + path1.substring(0, 10)
+                post_url = piping.value + 'jschat-' + path2.substring(0, 10)
+            } else {
+                post_url = piping.value + 'jschat-' + path1.substring(0, 10)
+                get_url = piping.value + 'jschat-' + path2.substring(0, 10)
+            }
+            receiveLoop()
         }
 
         // Receive-loop
-        async function receiveLoop(btn) {
-            if (your_id.value === '' || peer_id.value === '' || html_secret.value === '') {
-                return
-            }
-
+        async function receiveLoop() {
             switchOp(true)
-            check_url = await getUrl(`${peer_id.value}-${your_id.value}`)
-            post_url = await getUrl(`${your_id.value}-${peer_id.value}`)
-
             const currentDate = new Date()
             const salt = `${currentDate.getUTCFullYear()}-${currentDate.getUTCMonth() + 1}-${currentDate.getUTCDate()}`
             cypher_key = await generateKeyFromSeed(html_secret.value, salt)
-            send(`** ${your_id.value} is ready **`)
+
+            // fixme
+            send(`** ${initiator ? 'Inititator' : 'Acceptor'} is ready **`)
 
             while (true) {
                 try {
                     // Get peer's response
-                    const res = await fetch(check_url);
+                    const res = await fetch(get_url);
                     // Create talk element
 
                     // Set peer's message
@@ -221,11 +242,22 @@
                     const decryptedData = await decrypt2Str(raw, cypher_key)
                     addReceiveSpan(decryptedData)
                 } catch (err) {
-                    console.error(err);
+                    show_error('Wrong initiator, secret or key? Possible other peer is using. Try different ones')
+                    console.log(err);
                     switchOp(false)
                     break
                 }
             }
+        }
+
+        function show_error(msg) {
+            error_div.style.display = 'flex';
+            error_div.innerText = msg
+
+            setTimeout(() => {
+                error_div.innerText = '';
+                error_div.style.display = 'none';
+            }, 5000);
         }
         async function addReceiveSpan(decryptedData) {
             const talk = document.createElement('span');
@@ -257,12 +289,14 @@
                 body: data //message.value
             }).then(res => {
                 if (res.ok) {
-                    // Create talk element
                     addMyMessageSpan(msg)
-                        // Empty your message
                     message.value = '';
                 }
-            }).catch(err => console.error(err))
+            }).catch(err => {
+                console.error(err)
+                show_error('Fail to send message')
+                switchOp(false)
+            })
         }
         window.message.onkeyup = (ev) => {
             if (ev.key === 'Enter' && event.ctrlKey) {
@@ -279,7 +313,11 @@
         }
         document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill the input field when the page is ready
-            sha256(new Date().getTime().toString()).then(k => html_secret.value = k.substring(3, 7))
+            s_min = new Date().getUTCMinutes().toString().padStart(2, '0')
+            s_hash = sha256(s_min).then(k => {
+                html_secret.value = k.substring(0, 2)
+                pair_key.value = k.substring(2, 5)
+            })
         });
 
         function handleCheckboxChange() {
