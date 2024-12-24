@@ -6,12 +6,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//cdn.jsdelivr.net/npm/picnic@7.1.0/picnic.min.css" rel="stylesheet">
+    <script src="https://github.com/richtr/NoSleep.js/raw/refs/heads/master/dist/NoSleep.min.js"></script>
 
     <style type="text/css">
         .sent {
             color: cornflowerblue;
             float: right;
             background-color: beige;
+            white-space: pre-wrap;
         }
         
         .status {
@@ -48,6 +50,7 @@
             background-color: #efefef;
             padding: 10px 10px 40px 10px;
             margin: 10px;
+            display: none;
         }
         
         .info {
@@ -55,23 +58,43 @@
         }
         
         #chat {
-            overflow: scroll;
-            max-height: 200px;
+            overflow: auto;
+            max-height: 75vh;
+            /* 75% of the screen */
+            font-size: small;
         }
         
         label {
-            padding-left: 20px;
+            padding-left: 15px;
+            font-size: small;
         }
         
         body {
-            padding: 10px 20px 10px 20px;
+            padding: 10px;
         }
         
-        span.tm {
-            float: left;
-            font-size: 70%;
-            padding-right: 20px;
-            padding-top: 5px;
+        .me {
+            display: grid !important;
+            justify-content: end;
+        }
+        
+        .other {
+            display: grid !important;
+            justify-content: start;
+        }
+        
+        .me>span {
+            white-space: pre-wrap;
+            background-color: antiquewhite;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        .other>span {
+            background-color: azure;
+            white-space: pre-wrap;
+            padding-left: 10px;
+            padding-right: 10px;
         }
     </style>
 </head>
@@ -81,20 +104,25 @@
     <div class="flex three demo">
         <div>
             <div>
-                <label>
-                    <input type="radio" id='rolei' value="i" name="arole" onchange="roleChange(this)" onclick="roleChange(this)">
+                <label for="rolei">
+                    <input type="radio" id='rolei' value="i" name="arole" onchange="roleChange(this)"
+                        onclick="roleChange(this)">
                     <span class="checkable">Initiator</span>
-                  </label>
+                </label>
             </div>
             <div>
-                <label>
+                <label for="rolea">
                     <input type="radio" id='rolea' value="a" name="arole" onchange="roleChange(this)">
-                   <span class="checkable">Responder</span>
-                 </label>
+                    <span class="checkable">Responder</span>
+                </label>
             </div>
         </div>
         <div class="border-box">
-            <input id='uniqStr' type="text" placeholder="shared secrets" size="16"><br>Shared Secrets</div>
+            <input id='uniqStr' type="text" placeholder="shared secrets" size="16"><br><small>Shared Secrets</small><br>
+            <input type="checkbox" id="keepOn">
+            <label for="keepOn" class="checkable" style="font-size: smaller;">Screen
+                On</smaller></label>
+        </div>
         <div>
             <select id='piping'>
                 <option value="https://ppng.io/">https://ppng.io/</option>
@@ -105,10 +133,9 @@
         </div>
     </div>
 
-    </div>
     <div id='details' class="border-box">
         <div class="clearfix">
-            <textarea rows="4" cols="50" id=localOffer></textarea>
+            <textarea rows="4" cols="50" id="localOffer"></textarea>
             <div class="right">
                 <button id=localOfferSet class="float-right warning">Create Offer</button>
             </div>
@@ -127,7 +154,11 @@
         </div>
 
     </div>
-    <p style="text-align: center;margin: 0px;padding: 0px;"><small>If webrtc doesn't work.</small> <a href="./chat.html">Try plain piping</a> or <a href="../p2pf">PeerJS file share</a></p>
+    <p style="text-align: center;margin: 0px;padding: 0px;"><small>If webrtc doesn't work.</small> <a href="./chat.html">Try plain piping</a> or <a href="../p2pf">PeerJS file share</a> <br>
+        <small>Switch devices as the initiator might help sometimes. alternative apps <a
+                href="https://snapdrop.net/">snapshare</a>, <a href="https://sharedrop.io">sharedrop</a> and <a
+                href="https://pairdrop.net/">pairdrop</a></small>
+    </p>
     <div>
 
         <p class="status center" id='pstatus'>disconnected</p>
@@ -137,11 +168,11 @@
 
             <div class="row">
                 <form action="" onsubmit="event.preventDefault();return sendMsg();" class="flex demo">
-                    <div>
-                        <input id=sendTxt type="text" name="" placeholder="chat here" style="width: 100%;">
+                    <div style="width: 80%;">
+                        <textarea id=sendTxt type="text" rows="2" placeholder="chat here. Control + Enter to send" style="width: 100%;"></textarea>
                     </div>
                     <div class="float-right">
-                        <button type="submit" class="float-right fill-all btn">Message</button>
+                        <button type="submit" class="float-right fill-all btn shyButton">Message</button>
                     </div>
                 </form>
             </div>

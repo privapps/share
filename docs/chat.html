@@ -23,22 +23,45 @@
         }
         
         .me {
-            text-align: right;
+            display: grid !important;
+            justify-content: end;
         }
         
         .other {
-            background-color: bisque;
+            display: grid !important;
+            justify-content: start;
+        }
+        
+        .me>span {
+            white-space: pre-wrap;
+            background-color: antiquewhite;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        .other>span {
+            background-color: skyblue;
+            white-space: pre-wrap;
+            padding-left: 10px;
+            padding-right: 10px;
         }
         
         input[type="text"]:disabled {
             background-color: #e2e2e2;
-            /* Light gray background color */
             color: #555;
-            /* Dark gray text color */
         }
         
         input[type="text"]::placeholder {
             color: #aaa;
+        }
+        
+        .file-dev {
+            background-color: beige;
+        }
+        
+        .flex-center {
+            display: flex;
+            justify-content: center;
         }
     </style>
     <script src="https://rf00.github.io/minizip-asm.js/lib/minizip-asm.min.js"></script>
@@ -48,8 +71,10 @@
 <body>
     <div class="flex">
         <small>
-        <a target="_blank" href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo Ota</a>
-        Symmetric end to end encryption for chat using piping server</small>
+            <a target="_blank"
+                href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo
+                Ota</a>
+            Symmetric end to end encryption for chat using piping server</small>
         <a href="./index.html">Webrtc based</a>
     </div>
 
@@ -62,37 +87,46 @@
         </div>
         <div>
             <select type="text" id='piping'>
+                <option value="https://ppng.io/">https://ppng.io/</option>
                 <option value="https://piping.glitch.me/">https://piping.glitch.me/</option>
                 <option value="https://piping-47q675ro2guv.runkit.sh/">https://piping-47q675ro2guv.runkit.sh/</option>
-                <option value="https://ppng.io/">https://ppng.io/</option>
             </select>
+        </div>
+    </div>
+    <div id="file_upload_div" class="flex three file-dev" style="display: none;">
+
+        <div>
+            <input type="file" id="fileInput" class="file-dev"></label>
+        </div>
+        <div>
+            <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Send File</button>
+        </div>
+        <div>
+            <input type="checkbox" id="fileEncrypt" onchange="handleCheckboxChange()"><label for="fileEncrypt" class="checkable">Zip Encrypt
+            </label>
+            <small>If selected, multiple Files can be zipped together and encrypted. Password is same as your
+                chat
+                secrets.
+                Otherwise, the raw file will be sent, one at a time. <a href="zip.html" target="_blank">You can unzip
+                    here </a></small>
         </div>
     </div>
     <div class="flex three">
         <div>
             <button onclick='receiveLoop(this)' id='btn' data-tooltip="Secrets has to match" class="tooltip-right">Connect</button>
+            <button onclick='send()' id='button_send' style="display: none;" class="shyButton success">Send
+                Message</button>
         </div>
-        <div>
-            <button onclick='switchFile()' id='button_file' class='warning' disabled>Transfer Files</button>
+        <div class="file-dev flex-center">
+            <button onclick='switchFile()' id='button_file' class='warning toggle' disabled>Transfer Files</button>
         </div>
         <div>
             <input type="text" placeholder="Secrets. has to match with your peer" id='html_secret'>
         </div>
     </div>
 
-    <div id="file_upload" class="flex two" style="display: none;">
-        <div style="float: left;">
-            <label for="fileInput"><small>Multiple Files will be zipped and encrypted.</small><br/>
-            <input type="file" id="fileInput" multiple></label>
-        </div>
-        <div style="float: right;">
-            <label for="uploadButton"><small>Password is same as your chat secrets</small></label><br/>
-            <button id="uploadButton" style="width: 50%;" onclick="uploadFile()">Send</button>
-        </div>
-    </div>
-
-    <div class="flex">
-        <div><input type="text" placeholder="Message. Enter to send" id='message'></div>
+    <div class="flex" id="message_box">
+        <div><textarea style="width: 100%;box-sizing: border-box" rows="2" placeholder="Message. Control + Enter to send" id='message'></textarea></div>
     </div>
     <div id='talks'>
         <!--This will be added by JavaScript -->
@@ -104,9 +138,9 @@
         function switchFile() {
             show_file = !show_file
             if (show_file) {
-                file_upload.style.display = 'inline-block'
+                file_upload_div.style.display = 'flex'
             } else {
-                file_upload.style.display = 'none'
+                file_upload_div.style.display = 'none'
             }
         }
 
@@ -115,28 +149,28 @@
             if (!fileInput.files || fileInput.files.length === 0) {
                 return
             }
+            const fileEncryptCheckbox = document.getElementById('fileEncrypt');
             var file = fileInput.files[0];
-            // console.log('ofile', file)
-            const zip_file = await compress_with_minizip_and_encrypt(fileInput.files, html_secret.value, file.name + '.zip')
-                // console.log('zfile', zip_file)
+            const file_to_send = fileEncryptCheckbox.checked ?
+                await compress_with_minizip_and_encrypt(fileInput.files, html_secret.value, file.name + '.zip') :
+                file
             var formData = new FormData();
-            formData.append("file", zip_file);
-            url = (await getUrl(`${your_id.value}`)).substring(0, 50) + '~f'
+            formData.append("file", file_to_send);
+            url = (await getUrl(`${your_id.value}`)).substring(0, 50) + '_' + (await sha256(new Date())).substring(0, 8) + '~f'
             text = 'sending file: \n' + url;
             send(text)
             console.log(url, await getUrl(`${your_id.value}`))
             fetch(url, {
                     method: "POST",
                     body: formData
-                })
-                .then(response => {
+                }).then(response => {
                     if (!response.ok) {
                         throw new Error("Upload failed with status " + response.status);
                     }
                     console.log("File uploaded successfully.");
                 })
                 .catch(error => {
-                    addMyMessageSpan("Error occurred during file upload:" + error.message);
+                    addMyMessageSpan("Error occurred during file upload: " + error.message);
                 });
         }
 
@@ -150,8 +184,14 @@
 
         function switchOp(flag) {
             your_id.disabled = peer_id.disabled = btn.disabled = piping.disabled = html_secret.disabled = flag;
-            message.disabled = !flag
-            button_file.disabled = !flag
+            message.disabled = button_file.disabled = !flag
+            if (flag) {
+                btn.style.display = 'none'
+                button_send.style.display = 'flex'
+            } else {
+                button_send.style.display = 'none'
+                btn.style.display = 'flex'
+            }
         }
 
         // Receive-loop
@@ -190,16 +230,17 @@
         async function addReceiveSpan(decryptedData) {
             const talk = document.createElement('span');
             talk.classList.add('other');
+            innerSpan = document.createElement('span');
 
             const regex0 = /^sending file: \n(http.*~f$)/
             const m = decryptedData.match(regex0)
             if (m) {
-                const old = talk.innerHTML
-                talk.innerText = `${new Date().toLocaleTimeString()}\n`
-                talk.innerHTML = talk.innerHTML + `sending file:<a href="${m[1]}">${m[1]}</a>`
+                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n`
+                innerSpan.innerHTML = innerSpan.innerHTML + `sending file: <a href="${m[1]}">${m[1]}</a>`
             } else {
-                talk.innerText = `${new Date().toLocaleTimeString()}\n  ${decryptedData}`
+                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${decryptedData}`
             }
+            talk.appendChild(innerSpan);
             // Add peer's message
             talks.insertBefore(talk, talks.firstChild);
         }
@@ -224,21 +265,36 @@
             }).catch(err => console.error(err))
         }
         window.message.onkeyup = (ev) => {
-            if (ev.key === 'Enter') {
+            if (ev.key === 'Enter' && event.ctrlKey) {
                 send()
             }
         }
         async function addMyMessageSpan(msg) {
             const talk = document.createElement('span');
             talk.classList.add('me');
-            talk.innerText = `${new Date().toLocaleTimeString()}\n  ${msg}`
+            innerSpan = document.createElement('span');
+            innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${msg}`
+            talk.appendChild(innerSpan);
             talks.insertBefore(talk, talks.firstChild);
         }
         document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill the input field when the page is ready
             sha256(new Date().getTime().toString()).then(k => html_secret.value = k.substring(3, 7))
-                // console.log(html_secret.value)
         });
+
+        function handleCheckboxChange() {
+            const fileEncryptCheckbox = document.getElementById('fileEncrypt');
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = null;
+            fileInput.files = new DataTransfer().files;
+
+            // If the checkbox is checked, enable multiple file selection
+            if (fileEncryptCheckbox.checked) {
+                fileInput.setAttribute('multiple', 'multiple');
+            } else {
+                fileInput.removeAttribute('multiple');
+            }
+        }
     </script>
 </body>
 <html>

@@ -12,8 +12,9 @@
     <label for="fileInput">
             <input type="file" id="fileInput"></label>
     <label for="passwordInput"><small>Password</small>
-            <input type="text" id="passwordInput" value="1"></label>
+            <input type="text" id="passwordInput" value=""></label>
     <button id="Extract" onclick="handleFile()">Extract</button>
+    <p>If there is no password, leave it empty</p>
     <script>
         let out_files = []
         async function handleFile() {

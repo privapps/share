@@ -16,7 +16,13 @@ function errHandler(err) {
 
 function sendMsg() {
     var text = sendTxt.value;
-    chat.innerHTML = "<pre><span class='tm'>" + new Date().toLocaleTimeString() + "</span><span class=sent>" + text + "</span></pre>" + chat.innerHTML;
+
+    const talk = document.createElement('span');
+    talk.classList.add('me');
+    innerSpan = document.createElement('span');
+    innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${text}`
+    talk.appendChild(innerSpan);
+    chat.insertBefore(talk, chat.firstChild);
     _chatChannel.send(text);
     sendTxt.value = "";
     return false;
@@ -208,7 +214,14 @@ function chatChannel(e) {
         console.log('chat channel is open', e);
     }
     _chatChannel.onmessage = function(e) {
-        chat.innerHTML = "<pre><span class='tm'>" + new Date().toLocaleTimeString() + "</span><code>" + e.data + "</code></pre>" + chat.innerHTML
+        const talk = document.createElement('span');
+        talk.classList.add('other');
+        innerSpan = document.createElement('span');
+        innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${e.data}`
+        talk.appendChild(innerSpan);
+        // Add peer's message
+        chat.insertBefore(talk, chat.firstChild);
+
     }
     _chatChannel.onclose = function() {
         console.log('chat channel closed');
@@ -307,4 +320,14 @@ function getSignalUrl() {
     }, 10)
     firstUrl = true
     fileTransfer.file = []
+    const keey_on = document.getElementById('keepOn');
+
+    keey_on.addEventListener('change', function() {
+        keey_on.checked ? noSleep.enable() : noSleep.disable();
+    });
+    window.sendTxt.onkeyup = (ev) => {
+        if (ev.key === 'Enter' && ev.ctrlKey) {
+            sendMsg()
+        }
+    }
 })();
