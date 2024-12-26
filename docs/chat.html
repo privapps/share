@@ -313,7 +313,7 @@
         }
         document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill the input field when the page is ready
-            s_min = new Date().getUTCMinutes().toString().padStart(2, '0')
+            s_min = Math.floor(new Date().getTime() / 100000).toString()
             s_hash = sha256(s_min).then(k => {
                 html_secret.value = k.substring(0, 2)
                 pair_key.value = k.substring(2, 5)

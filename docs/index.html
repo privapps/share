@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//cdn.jsdelivr.net/npm/picnic@7.1.0/picnic.min.css" rel="stylesheet">
-    <script src="https://github.com/richtr/NoSleep.js/raw/refs/heads/master/dist/NoSleep.min.js"></script>
+    <script src="https://richtr.github.io/NoSleep.js/dist/NoSleep.min.js"></script>
 
     <style type="text/css">
         .sent {
@@ -118,7 +118,7 @@
         </div>
         <div class="border-box">
             <input id='uniqStr' type="text" placeholder="shared secrets" size="16"><br><small>Shared Secrets</small><br>
-            <input type="checkbox" id="keepOn">
+            <input type="checkbox" id="keepOn" onclick="this.checked ? noSleep.enable() : noSleep.disable()">
             <label for="keepOn" class="checkable" style="font-size: smaller;">Screen
                 On</smaller></label>
         </div>
@@ -153,7 +153,7 @@
         </div>
 
     </div>
-    <p style="text-align: center;margin: 0px;padding: 0px;"><small>If webrtc doesn't work.</small> <a href="./chat.html">Try plain piping</a>, <a href="../p2pf">PeerJS file share</a> or <a href="../mqtt-chat">MQTT Group Chat</a> <br>
+    <p style="text-align: center;margin: 0px;padding: 0px;"><small>If webrtc doesn't work.</small> <a href="./chat.html">Try plain piping</a>, <a href="./peerjs.html">PeerJS share</a> or <a href="../mqtt-chat">MQTT Group Chat</a> <br>
         <small>Switch devices as the initiator might help sometimes. alternative Webrtc apps <a
                 href="https://snapdrop.net/">snapshare</a>, <a href="https://sharedrop.io">sharedrop</a> and <a
                 href="https://pairdrop.net/">pairdrop</a></small>
@@ -200,6 +200,9 @@
     </div>
     <script src="js/plainwebrtc.js"></script>
     <script src="js/production.min.js"></script>
+    <script>
+        let noSleep = new NoSleep();
+    </script>
 </body>
 
 </html>
