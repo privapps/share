@@ -14,6 +14,10 @@
             padding: 10px;
         }
         
+        h2 {
+            text-align: center;
+        }
+        
         #talks {
             padding: 5px;
         }
@@ -73,8 +77,9 @@
             justify-content: center;
         }
         
-        .dlink {
+        a.dlink {
             margin-left: 10px;
+            text-decoration: underline;
         }
         
         .green-progress::-webkit-progress-value {
@@ -96,6 +101,7 @@
 </head>
 
 <body>
+    <h2>PeerJS WebRTC Chat</h2>
     <div class="flex three" id="control_div">
         <div>
             <small>One for Each</small><br />
@@ -248,9 +254,9 @@
                 downloadLink.classList.add('dlink');
                 downloadLink.href = URL.createObjectURL(receivedFile);
                 downloadLink.download = data.fileName;
-                downloadLink.textContent = `Download received file ${data.fileName}`;
-
+                downloadLink.textContent = `Download ${data.fileName}`;
                 // Simulate a click to prompt the download
+                progress.parentNode.insertBefore(downloadLink, progress.nextSibling)
                 downloadLink.click();
 
                 // Reset the receiving state for this file

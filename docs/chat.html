@@ -13,6 +13,10 @@
             padding: 10px;
         }
         
+        h2 {
+            text-align: center;
+        }
+        
         #talks {
             padding: 5px;
         }
@@ -77,13 +81,14 @@
 </head>
 
 <body>
+    <h2>Piping Chat</h2>
     <div class="flex">
         <small>
             <a target="_blank"
                 href="https://dev.to/nwtgck/simple-chat-over-only-http-without-websocket-and-webrtc-1n4m">base on Ryo
                 Ota</a>
             Symmetric end to end encryption for chat using piping server</small>
-        <a href="./index.html">Webrtc based</a>
+        <a href="./peerjs.html">PeerJS WebRTC</a>
     </div>
 
     <div class="flex four" id="control_div">
@@ -202,20 +207,16 @@
             if (pair_key.value === '' || html_secret.value === '') {
                 return
             }
-            xkey = pair_key.value.split("").reverse().join("")
-            if (xkey === pair_key.value) {
-                show_error('Pair key is not valid')
-                return
-            }
+            hash = await sha256(pair_key.value)
             initiator = bt.value === 'i'
-            path1 = await sha256(pair_key.value)
-            path2 = await sha256(xkey)
+            path1 = hash.substring(0, 10)
+            path2 = hash.substring(10, 20)
             if (initiator) {
-                get_url = piping.value + 'jschat-' + path1.substring(0, 10)
-                post_url = piping.value + 'jschat-' + path2.substring(0, 10)
+                get_url = piping.value + 'jschat-' + path1
+                post_url = piping.value + 'jschat-' + path2
             } else {
-                post_url = piping.value + 'jschat-' + path1.substring(0, 10)
-                get_url = piping.value + 'jschat-' + path2.substring(0, 10)
+                get_url = piping.value + 'jschat-' + path2
+                post_url = piping.value + 'jschat-' + path1
             }
             receiveLoop()
         }
