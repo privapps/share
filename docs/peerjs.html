@@ -137,7 +137,8 @@
             </div>
             <div>
                 <input type="checkbox" id="keepOn" onclick="this.checked ? noSleep.enable() : noSleep.disable()">
-                <label for="keepOn" class="checkable" style="font-size: smaller;">Screen On</smaller></label>
+                <label for="keepOn" class="checkable" style="font-size: smaller;">Screen On</smaller></label> <br />
+                <button onclick='disconnect()' style="font-size: 70%;height: 50%;" id='disconnect_div' class="shyButton warning">Disconnect</button>
             </div>
         </div>
         <div class="flex">
@@ -157,7 +158,26 @@
         <!--This will be added by JavaScript -->
     </div>
 
-    <div id="xxx"></div>
+    <div id="info_div">
+        <p>There are three different implementations for <a href="https://github.com/privapps/share">1 on 1 chat and
+                file transfer(github):</a></p>
+        <ol>
+            <li>
+                <b>PeerJS WebRTC.</b> The implementation is indeed more reliable than plain WebRTC, thanks to its robust PeerJS server for signaling and seamless WebRTC communication. By starting with a secure initiator and a responsive acceptor, this
+                solution ensures a smooth and efficient experience for users.
+            </li>
+            <li>
+                <b>Plain WebRTC.</b> <a href="plain.html">This approach</a> begins with a reliable <a href="https://github.com/nwtgck/piping-server">piping server</a>, which sends signals to initiate communication. Then, we seamlessly transition to WebRTC,
+                utilizing the power of peer-to-peer technology to facilitate real-time chat and file transfers.
+            </li>
+            <li><b>Piping Chat.</b> <a href="chat.html">This approach</a> is the most reliable, as it fully depends on a
+                <a href="https://github.com/nwtgck/piping-server">piping server</a>. By utilizing a symmetric token key, this approach provides unparalleled security, as every piece of data is safeguarded and only accessible with the correct decryption
+                key.
+        </ol>
+        <p>WebRTC's peer-to-peer nature makes it an incredibly convenient and direct way to communicate with others, without needing a centralized server in the middle. However, this can be a blessing and a curse - when the internet connection is strong
+            and reliable, WebRTC can deliver seamless, one-on-one conversations. But, if the network is experiencing some unexpected obstacles, such as NAT or firewalls, or if you need to establish a connection in a new location, a server can serve as
+            a helpful intermediary to ensure a smooth and successful chat.</p>
+    </div>
     <script>
         let get_url, post_url
         let noSleep = new NoSleep();
@@ -271,6 +291,7 @@
             if (flag) {
                 control_div.classList.add("disabled")
                 connected_div.style.display = 'flex'
+                info_div.style.display = 'none'
             } else {
                 control_div.classList.remove("disabled")
                 connected_div.style.display = 'none'
@@ -325,6 +346,10 @@
                                 sendConn.send(hash)
                                 console.info('sendConn sent hash', hash)
                             })
+                            sendConn.on('close', function() {
+                                console.log('sendConn close');
+                                switchOp(false)
+                            })
                         }
                         console.log('Ready !!')
                             // peer.disconnect()
@@ -346,8 +371,11 @@
                         return
                     }
                     console.log('Receive unexpected ', data)
-                        // ok that's real fun
                 });
+                conn.on('close', () => {
+                    console.log('conn closed')
+                    switchOp(false)
+                })
             })
 
             peer.on('error', err => {
@@ -379,7 +407,7 @@
                 progress.max = 100; // Maximum value (100%)
                 innerSpan.appendChild(progress)
             } else {
-                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${msg}`
+                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n${msg}`
             }
 
             talk.appendChild(innerSpan);
@@ -418,7 +446,7 @@
                 progress.max = 100; // Maximum value (100%)
                 innerSpan.appendChild(progress)
             } else {
-                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n  ${msg}`
+                innerSpan.innerText = `${new Date().toLocaleTimeString()}\n${msg}`
             }
             talk.appendChild(innerSpan);
             talks.insertBefore(talk, talks.firstChild);
@@ -457,6 +485,16 @@
             const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 
             return hashHex;
+        }
+
+        function disconnect() {
+            if (sendConn) {
+                sendConn.close()
+            }
+            if (peer && !peer.disconnected) {
+                peer.disconnect()
+            }
+            switchOp(false)
         }
     </script>
 </body>
